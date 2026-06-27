@@ -37,6 +37,10 @@ public sealed class GridInputRouter
         switch (_session.State)
         {
             case GridSessionState.Selecting:
+                // First keystroke only: a monitor key re-targets the grid to that monitor; any
+                // other key drills a cell on the current (focused) monitor.
+                if (_session.CanSelectMonitor && _session.Config.MonitorKeyMap.TryGetCell(c, out _))
+                    return _session.SelectMonitor(c);
                 return _session.Drill(c);
 
             case GridSessionState.Acting:

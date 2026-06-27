@@ -27,9 +27,18 @@ internal sealed class GridOverlayElement : FrameworkElement
         LabelBackBrush.Freeze();
     }
 
+    private enum OverlayMode
+    {
+        Grid,
+        MonitorSelect,
+    }
+
+    private OverlayMode _mode = OverlayMode.Grid;
     private GridRect _virtualScreen;
     private GridRect _currentBounds;
     private GridConfig _config = GridConfig.Default;
+    private IReadOnlyList<GridRect> _monitors = Array.Empty<GridRect>();
+    private IReadOnlyList<char> _monitorLabels = Array.Empty<char>();
 
     // Cached cell labels. The text/typeface/size are constant per (config, dpi), so the
     // (relatively expensive) FormattedText layout is built once and only the draw position
@@ -38,12 +47,24 @@ internal sealed class GridOverlayElement : FrameworkElement
     private GridConfig? _labelConfig;
     private double _labelDpi;
 
-    /// <summary>Updates what the overlay shows and requests a repaint.</summary>
-    public void Update(GridRect virtualScreen, GridRect currentBounds, GridConfig config)
+    /// <summary>Shows the cell grid for the current drill state and requests a repaint.</summary>
+    public void UpdateGrid(GridRect virtualScreen, GridRect currentBounds, GridConfig config)
     {
+        _mode = OverlayMode.Grid;
         _virtualScreen = virtualScreen;
         _currentBounds = currentBounds;
         _config = config;
+        InvalidateVisual();
+    }
+
+    /// <summary>Shows a selection label centred on each monitor (the first-keystroke phase).</summary>
+    public void UpdateMonitorSelection(
+        GridRect virtualScreen, IReadOnlyList<GridRect> monitors, IReadOnlyList<char> labels)
+    {
+        _mode = OverlayMode.MonitorSelect;
+        _virtualScreen = virtualScreen;
+        _monitors = monitors;
+        _monitorLabels = labels;
         InvalidateVisual();
     }
 
@@ -54,8 +75,17 @@ internal sealed class GridOverlayElement : FrameworkElement
         if (_virtualScreen.Width <= 0 || _virtualScreen.Height <= 0)
             return;
 
+        var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        if (_mode == OverlayMode.MonitorSelect)
+            RenderMonitorSelection(dc, dpi);
+        else
+            RenderGrid(dc, dpi);
+    }
+
+    private void RenderGrid(DrawingContext dc, double dpi)
+    {
         var cells = Grid.Subdivide(_currentBounds, _config.Rows, _config.Cols);
-        var labels = GetLabels(VisualTreeHelper.GetDpi(this).PixelsPerDip);
+        var labels = GetLabels(dpi);
 
         for (var i = 0; i < cells.Count; i++)
         {
@@ -64,13 +94,34 @@ internal sealed class GridOverlayElement : FrameworkElement
             var bottomRight = Map(cell.Right, cell.Bottom);
             dc.DrawRectangle(null, LinePen, new Rect(topLeft, bottomRight));
 
-            var text = labels[i];
-            var center = Map(cell.Center.X, cell.Center.Y);
-            var origin = new Point(center.X - text.Width / 2, center.Y - text.Height / 2);
-            dc.DrawRectangle(LabelBackBrush, null,
-                new Rect(origin.X - 3, origin.Y - 1, text.Width + 6, text.Height + 2));
-            dc.DrawText(text, origin);
+            DrawText(dc, labels[i], cell.Center.X, cell.Center.Y);
         }
+    }
+
+    private void RenderMonitorSelection(DrawingContext dc, double dpi)
+    {
+        for (var i = 0; i < _monitors.Count && i < _monitorLabels.Count; i++)
+        {
+            var monitor = _monitors[i];
+            var topLeft = Map(monitor.Left, monitor.Top);
+            var bottomRight = Map(monitor.Right, monitor.Bottom);
+            dc.DrawRectangle(null, LinePen, new Rect(topLeft, bottomRight));
+
+            // A large label so the monitor key is obvious from across the desk.
+            var text = new FormattedText(
+                _monitorLabels[i].ToString(), CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                LabelTypeface, 96, LabelBrush, dpi);
+            DrawText(dc, text, monitor.Center.X, monitor.Center.Y);
+        }
+    }
+
+    private void DrawText(DrawingContext dc, FormattedText text, double pixelX, double pixelY)
+    {
+        var center = Map(pixelX, pixelY);
+        var origin = new Point(center.X - text.Width / 2, center.Y - text.Height / 2);
+        dc.DrawRectangle(LabelBackBrush, null,
+            new Rect(origin.X - 3, origin.Y - 1, text.Width + 6, text.Height + 2));
+        dc.DrawText(text, origin);
     }
 
     private FormattedText[] GetLabels(double dpi)

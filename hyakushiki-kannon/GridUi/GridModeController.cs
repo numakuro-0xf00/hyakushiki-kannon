@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using hyakushiki_kannon.Core;
+using hyakushiki_kannon.Core.Geometry;
 using hyakushiki_kannon.Core.Input;
 using hyakushiki_kannon.Interop;
 
@@ -21,6 +22,11 @@ public sealed class GridModeController : IDisposable
     // A single overlay window, reused (shown/hidden) across activations rather than recreated.
     private GridOverlayWindow? _overlay;
 
+    // The monitor set this activation opened with, plus whether we are still on the first keystroke
+    // (the monitor-selection phase, where the overlay shows per-monitor labels instead of the grid).
+    private MonitorLayout? _activeLayout;
+    private bool _awaitingFirstKey;
+
     public GridModeController(GridConfig? config = null)
     {
         _screen = new VirtualScreenProvider();
@@ -40,7 +46,9 @@ public sealed class GridModeController : IDisposable
             return;
         }
 
-        _session.Activate(_screen.VirtualScreenBounds);
+        _activeLayout = _screen.GetMonitorLayout();
+        _awaitingFirstKey = true;
+        _session.Activate(_activeLayout);
         EnsureOverlay().ShowOverlay();
         RefreshOverlay();
     }
@@ -54,6 +62,7 @@ public sealed class GridModeController : IDisposable
         if (!_session.IsActive)
             return false;
 
+        var wasAwaitingFirstKey = _awaitingFirstKey;
         var boundsBefore = _session.CurrentBounds;
 
         bool consumed;
@@ -64,10 +73,15 @@ public sealed class GridModeController : IDisposable
         else
             consumed = false;
 
+        if (consumed && wasAwaitingFirstKey)
+            _awaitingFirstKey = false;
+
         if (!_session.IsActive)
             _overlay?.HideOverlay();
-        else if (_session.CurrentBounds != boundsBefore)
-            RefreshOverlay(); // only a drill/back changes the grid; nudges move just the cursor
+        else if ((consumed && wasAwaitingFirstKey) || _session.CurrentBounds != boundsBefore)
+            // Repaint when leaving the monitor-selection phase, or when a drill/back changes the
+            // grid bounds; a plain nudge moves only the cursor and needs no repaint.
+            RefreshOverlay();
 
         return consumed;
     }
@@ -78,8 +92,31 @@ public sealed class GridModeController : IDisposable
         return _overlay;
     }
 
-    private void RefreshOverlay() =>
-        _overlay?.Refresh(_screen.VirtualScreenBounds, _session.CurrentBounds, _session.Config);
+    private void RefreshOverlay()
+    {
+        if (_overlay is null)
+            return;
+
+        // First keystroke with more than one monitor: show the per-monitor selection labels.
+        if (_awaitingFirstKey && _activeLayout is { Count: > 1 } layout)
+        {
+            var labels = MonitorLabels(layout.Count);
+            _overlay.ShowMonitorSelection(_screen.VirtualScreenBounds, layout.Monitors, labels);
+            return;
+        }
+
+        _overlay.ShowGrid(_screen.VirtualScreenBounds, _session.CurrentBounds, _session.Config);
+    }
+
+    private IReadOnlyList<char> MonitorLabels(int count)
+    {
+        var keys = _session.Config.MonitorKeys;
+        var n = Math.Min(count, keys.Length);
+        var labels = new char[n];
+        for (var i = 0; i < n; i++)
+            labels[i] = char.ToUpperInvariant(keys[i]);
+        return labels;
+    }
 
     public void Dispose()
     {

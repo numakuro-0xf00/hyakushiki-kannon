@@ -67,9 +67,14 @@ internal sealed class GridOverlayWindow : Window
     /// <summary>Hides the overlay, keeping the instance alive for the next activation.</summary>
     public void HideOverlay() => Hide();
 
-    /// <summary>Repaints the overlay for the current drill state.</summary>
-    public void Refresh(GridRect virtualScreen, GridRect currentBounds, GridConfig config) =>
-        _element.Update(virtualScreen, currentBounds, config);
+    /// <summary>Repaints the overlay as the cell grid for the current drill state.</summary>
+    public void ShowGrid(GridRect virtualScreen, GridRect currentBounds, GridConfig config) =>
+        _element.UpdateGrid(virtualScreen, currentBounds, config);
+
+    /// <summary>Repaints the overlay as the per-monitor selection labels (first keystroke).</summary>
+    public void ShowMonitorSelection(
+        GridRect virtualScreen, IReadOnlyList<GridRect> monitors, IReadOnlyList<char> labels) =>
+        _element.UpdateMonitorSelection(virtualScreen, monitors, labels);
 
     protected override void OnKeyDown(KeyEventArgs e)
     {

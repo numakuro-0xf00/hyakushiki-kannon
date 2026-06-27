@@ -106,4 +106,31 @@ internal static partial class NativeMethods
 
     /// <summary>WS_EX_LAYERED: required alongside WS_EX_TRANSPARENT for reliable click-through.</summary>
     internal const int WS_EX_LAYERED = 0x00080000;
+
+    // --- Monitor enumeration ---------------------------------------------------------------
+    // DllImport (not LibraryImport) for EnumDisplayMonitors because it takes a callback delegate.
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    internal delegate bool MonitorEnumProc(nint hMonitor, nint hdcMonitor, ref RECT lprcMonitor, nint dwData);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool EnumDisplayMonitors(nint hdc, nint lprcClip, MonitorEnumProc lpfnEnum, nint dwData);
+
+    [DllImport("user32.dll")]
+    internal static extern nint MonitorFromWindow(nint hwnd, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    internal static extern nint GetForegroundWindow();
+
+    /// <summary>MONITOR_DEFAULTTONEAREST: resolve to the monitor nearest the window if none contains it.</summary>
+    internal const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
 }
