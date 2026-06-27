@@ -1,0 +1,32 @@
+<Window x:Class="hyakushiki_kannon.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:hyakushiki_kannon"
+        mc:Ignorable="d"
+        Title="GridMouse" Height="320" Width="420"
+        ResizeMode="CanMinimize" WindowStartupLocation="CenterScreen">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="GridMouse" FontSize="22" FontWeight="Bold" />
+        <TextBlock Grid.Row="1" Margin="0,4,0,12" TextWrapping="Wrap"
+                   Text="キーボードだけでカーソルを移動・クリックする常駐ツール。" />
+
+        <StackPanel Grid.Row="2">
+            <TextBlock Text="使い方" FontWeight="Bold" Margin="0,0,0,4" />
+            <TextBlock TextWrapping="Wrap" Text="Alt+G でグリッド表示。a s d f g h j k l でセルを選択（繰り返しで絞り込み）。" />
+            <TextBlock TextWrapping="Wrap" Margin="0,2,0,0" Text="Enter/Space で確定→左クリック、r で右クリック、d でダブルクリック。" />
+            <TextBlock TextWrapping="Wrap" Margin="0,2,0,0" Text="矢印キーで微調整、Backspace で一段戻る、Esc で解除。" />
+        </StackPanel>
+
+        <Button Grid.Row="3" Content="終了" Width="80" Height="28"
+                HorizontalAlignment="Right" Click="OnExitClick" />
+    </Grid>
+</Window>

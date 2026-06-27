@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Platform-agnostic core logic for GridMouse (codename hyakushiki-kannon).
+
+    Targets net8.0 (NOT net10.0-windows) on purpose: this project holds only the
+    pure interaction logic - grid geometry, key mapping and the grid-mode state
+    machine - behind interop interfaces (IPointerDevice, IScreenProvider). Keeping
+    it free of Win32 / WPF dependencies lets it build and be unit-tested on any
+    platform, including the Linux/CI host. The WPF app supplies the real Win32
+    implementations of the interfaces and can reference this assembly.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>hyakushiki_kannon.Core</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>

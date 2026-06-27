@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="hyakushiki-kannon/hyakushiki-kannon.csproj" />
+  <Project Path="hyakushiki-kannon.Core/hyakushiki-kannon.Core.csproj" />
+  <Project Path="hyakushiki-kannon.Core.Tests/hyakushiki-kannon.Core.Tests.csproj" />
+</Solution>
