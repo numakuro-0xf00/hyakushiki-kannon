@@ -48,4 +48,26 @@ public class GridConfigTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new GridConfig(nudgeStep: step));
     }
+
+    [Fact]
+    public void ConfigsBuiltFromIdenticalSettingsAreEqual()
+    {
+        // Regression: the derived (reference-typed) KeyMap must not break value equality.
+        var a = new GridConfig();
+        var b = new GridConfig();
+
+        Assert.Equal(a, b);
+        Assert.True(a == b);
+        Assert.Equal(a.GetHashCode(), b.GetHashCode());
+        Assert.Equal(GridConfig.Default, new GridConfig());
+    }
+
+    [Fact]
+    public void ConfigsWithDifferentSettingsAreNotEqual()
+    {
+        Assert.NotEqual(new GridConfig(nudgeStep: 8), new GridConfig(nudgeStep: 12));
+        Assert.NotEqual(
+            new GridConfig(rows: 3, cols: 3),
+            new GridConfig(rows: 4, cols: 4, cellKeys: "asdfghjklqwertyu"));
+    }
 }

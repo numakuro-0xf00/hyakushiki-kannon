@@ -20,9 +20,6 @@ public sealed class FakePointerDevice : IPointerDevice
     /// <summary>Double clicks performed, in order.</summary>
     public List<MouseButton> DoubleClicks { get; } = new();
 
-    /// <summary>Button-down/up events as (button, isDown) pairs, in order.</summary>
-    public List<(MouseButton Button, bool IsDown)> ButtonEvents { get; } = new();
-
     public void MoveTo(GridPoint point)
     {
         Position = point;
@@ -32,8 +29,4 @@ public sealed class FakePointerDevice : IPointerDevice
     public void Click(MouseButton button) => Clicks.Add(button);
 
     public void DoubleClick(MouseButton button) => DoubleClicks.Add(button);
-
-    public void ButtonDown(MouseButton button) => ButtonEvents.Add((button, true));
-
-    public void ButtonUp(MouseButton button) => ButtonEvents.Add((button, false));
 }

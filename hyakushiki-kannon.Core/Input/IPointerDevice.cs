@@ -20,10 +20,4 @@ public interface IPointerDevice
 
     /// <summary>Performs a double click with <paramref name="button"/> at the current position.</summary>
     void DoubleClick(MouseButton button);
-
-    /// <summary>Presses <paramref name="button"/> without releasing it (drag start).</summary>
-    void ButtonDown(MouseButton button);
-
-    /// <summary>Releases <paramref name="button"/> (drag end).</summary>
-    void ButtonUp(MouseButton button);
 }

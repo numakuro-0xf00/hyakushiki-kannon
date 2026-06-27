@@ -27,12 +27,28 @@ internal static class WpfKeyTranslator
         }
     }
 
-    /// <summary>Maps an A-Z letter key to its lowercase character; returns <c>false</c> otherwise.</summary>
+    /// <summary>
+    /// Maps a letter (A-Z) or digit (top-row or numpad) key to its lowercase character so any
+    /// such cell-key layout configured in <c>GridConfig</c> is selectable; returns <c>false</c>
+    /// for keys that don't correspond to a cell character.
+    /// </summary>
     public static bool TryGetChar(Key key, out char c)
     {
         if (key is >= Key.A and <= Key.Z)
         {
             c = (char)('a' + (key - Key.A));
+            return true;
+        }
+
+        if (key is >= Key.D0 and <= Key.D9)
+        {
+            c = (char)('0' + (key - Key.D0));
+            return true;
+        }
+
+        if (key is >= Key.NumPad0 and <= Key.NumPad9)
+        {
+            c = (char)('0' + (key - Key.NumPad0));
             return true;
         }
 

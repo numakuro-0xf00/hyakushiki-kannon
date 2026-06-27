@@ -90,4 +90,20 @@ internal static partial class NativeMethods
     internal const uint MOD_NOREPEAT = 0x4000;
 
     internal const int WM_HOTKEY = 0x0312;
+
+    // --- Extended window styles (overlay click-through) ------------------------------------
+
+    [LibraryImport("user32.dll", SetLastError = true, EntryPoint = "GetWindowLongPtrW")]
+    internal static partial nint GetWindowLongPtr(nint hWnd, int nIndex);
+
+    [LibraryImport("user32.dll", SetLastError = true, EntryPoint = "SetWindowLongPtrW")]
+    internal static partial nint SetWindowLongPtr(nint hWnd, int nIndex, nint dwNewLong);
+
+    internal const int GWL_EXSTYLE = -20;
+
+    /// <summary>WS_EX_TRANSPARENT: the window is skipped during mouse hit-testing (click-through).</summary>
+    internal const int WS_EX_TRANSPARENT = 0x0020;
+
+    /// <summary>WS_EX_LAYERED: required alongside WS_EX_TRANSPARENT for reliable click-through.</summary>
+    internal const int WS_EX_LAYERED = 0x00080000;
 }

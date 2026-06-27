@@ -52,4 +52,17 @@ public sealed record GridConfig
 
     /// <summary>A ready-to-use 3x3 home-row configuration.</summary>
     public static GridConfig Default { get; } = new();
+
+    // Equality is defined over the configuration inputs only. The synthesized record equality
+    // would otherwise include KeyMap, which has reference identity (no value Equals), so two
+    // configs built from identical settings would compare unequal. KeyMap is fully derived from
+    // Rows/Cols/CellKeys, so excluding it is safe.
+    public bool Equals(GridConfig? other) =>
+        other is not null
+        && Rows == other.Rows
+        && Cols == other.Cols
+        && CellKeys == other.CellKeys
+        && NudgeStep.Equals(other.NudgeStep);
+
+    public override int GetHashCode() => HashCode.Combine(Rows, Cols, CellKeys, NudgeStep);
 }

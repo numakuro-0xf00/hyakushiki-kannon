@@ -31,6 +31,13 @@ internal sealed class GridOverlayElement : FrameworkElement
     private GridRect _currentBounds;
     private GridConfig _config = GridConfig.Default;
 
+    // Cached cell labels. The text/typeface/size are constant per (config, dpi), so the
+    // (relatively expensive) FormattedText layout is built once and only the draw position
+    // changes per frame. Rebuilt when the config or DPI changes.
+    private FormattedText[]? _labels;
+    private GridConfig? _labelConfig;
+    private double _labelDpi;
+
     /// <summary>Updates what the overlay shows and requests a repaint.</summary>
     public void Update(GridRect virtualScreen, GridRect currentBounds, GridConfig config)
     {
@@ -48,7 +55,7 @@ internal sealed class GridOverlayElement : FrameworkElement
             return;
 
         var cells = Grid.Subdivide(_currentBounds, _config.Rows, _config.Cols);
-        var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        var labels = GetLabels(VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
         for (var i = 0; i < cells.Count; i++)
         {
@@ -57,17 +64,33 @@ internal sealed class GridOverlayElement : FrameworkElement
             var bottomRight = Map(cell.Right, cell.Bottom);
             dc.DrawRectangle(null, LinePen, new Rect(topLeft, bottomRight));
 
-            var label = char.ToUpperInvariant(_config.KeyMap.GetKey(i)).ToString();
-            var text = new FormattedText(
-                label, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
-                LabelTypeface, 20, LabelBrush, dpi);
-
+            var text = labels[i];
             var center = Map(cell.Center.X, cell.Center.Y);
             var origin = new Point(center.X - text.Width / 2, center.Y - text.Height / 2);
             dc.DrawRectangle(LabelBackBrush, null,
                 new Rect(origin.X - 3, origin.Y - 1, text.Width + 6, text.Height + 2));
             dc.DrawText(text, origin);
         }
+    }
+
+    private FormattedText[] GetLabels(double dpi)
+    {
+        if (_labels is not null && _labelDpi == dpi && _config.Equals(_labelConfig))
+            return _labels;
+
+        var labels = new FormattedText[_config.CellCount];
+        for (var i = 0; i < labels.Length; i++)
+        {
+            var label = char.ToUpperInvariant(_config.KeyMap.GetKey(i)).ToString();
+            labels[i] = new FormattedText(
+                label, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                LabelTypeface, 20, LabelBrush, dpi);
+        }
+
+        _labels = labels;
+        _labelConfig = _config;
+        _labelDpi = dpi;
+        return labels;
     }
 
     private Point Map(double pixelX, double pixelY) => new(

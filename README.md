@@ -40,5 +40,5 @@ dotnet build hyakushiki-kannon/hyakushiki-kannon.csproj
 dotnet run --project hyakushiki-kannon
 ```
 
-> Note: for accurate cursor placement on multi-monitor / mixed-DPI setups the process should run
-> per-monitor DPI aware; that refinement is tracked separately.
+> Note: the app declares Per-Monitor-V2 DPI awareness (`app.manifest`) so physical-pixel cursor
+> positioning stays aligned with the overlay under mixed per-monitor scaling.

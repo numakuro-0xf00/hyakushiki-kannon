@@ -17,6 +17,8 @@ public sealed class GridModeController : IDisposable
     private readonly GridSession _session;
     private readonly GridInputRouter _router;
     private readonly GlobalHotkey _hotkey;
+
+    // A single overlay window, reused (shown/hidden) across activations rather than recreated.
     private GridOverlayWindow? _overlay;
 
     public GridModeController(GridConfig? config = null)
@@ -34,49 +36,56 @@ public sealed class GridModeController : IDisposable
         {
             // Pressing the hotkey again while active cancels grid mode.
             _session.Cancel();
-            CloseOverlay();
+            _overlay?.HideOverlay();
             return;
         }
 
         _session.Activate(_screen.VirtualScreenBounds);
-
-        _overlay = new GridOverlayWindow();
-        _overlay.KeyPressed += OnOverlayKey;
-        _overlay.ShowOverlay();
+        EnsureOverlay().ShowOverlay();
         RefreshOverlay();
     }
 
-    private void OnOverlayKey(object? sender, Key key)
+    /// <summary>
+    /// Routes one overlay keystroke. Returns <c>true</c> if grid mode consumed the key so the
+    /// overlay can mark it handled (and let unbound keys pass through).
+    /// </summary>
+    private bool OnOverlayKey(Key key)
     {
-        if (WpfKeyTranslator.TryGetSpecial(key, out var special))
-            _router.HandleSpecial(special);
-        else if (WpfKeyTranslator.TryGetChar(key, out var c))
-            _router.HandleChar(c);
+        if (!_session.IsActive)
+            return false;
 
-        // Any action (click/cancel) may have ended the session; reflect that in the UI.
-        if (_session.IsActive)
-            RefreshOverlay();
+        var boundsBefore = _session.CurrentBounds;
+
+        bool consumed;
+        if (WpfKeyTranslator.TryGetSpecial(key, out var special))
+            consumed = _router.HandleSpecial(special);
+        else if (WpfKeyTranslator.TryGetChar(key, out var c))
+            consumed = _router.HandleChar(c);
         else
-            CloseOverlay();
+            consumed = false;
+
+        if (!_session.IsActive)
+            _overlay?.HideOverlay();
+        else if (_session.CurrentBounds != boundsBefore)
+            RefreshOverlay(); // only a drill/back changes the grid; nudges move just the cursor
+
+        return consumed;
+    }
+
+    private GridOverlayWindow EnsureOverlay()
+    {
+        _overlay ??= new GridOverlayWindow { KeyHandler = OnOverlayKey };
+        return _overlay;
     }
 
     private void RefreshOverlay() =>
         _overlay?.Refresh(_screen.VirtualScreenBounds, _session.CurrentBounds, _session.Config);
 
-    private void CloseOverlay()
-    {
-        if (_overlay is null)
-            return;
-
-        _overlay.KeyPressed -= OnOverlayKey;
-        _overlay.Close();
-        _overlay = null;
-    }
-
     public void Dispose()
     {
-        CloseOverlay();
         _hotkey.Pressed -= OnHotkeyPressed;
         _hotkey.Dispose();
+        _overlay?.Close();
+        _overlay = null;
     }
 }

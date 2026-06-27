@@ -9,6 +9,8 @@
     <UseWPF>true</UseWPF>
     <!-- The [LibraryImport] source generator emits unsafe marshalling code. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Per-Monitor-V2 DPI awareness so physical-pixel cursor maths matches the overlay. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

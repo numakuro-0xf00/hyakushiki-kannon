@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using hyakushiki_kannon.Core.Geometry;
 using hyakushiki_kannon.Core.Input;
@@ -16,8 +17,10 @@ public sealed class Win32PointerDevice : IPointerDevice
     {
         get
         {
+            // Returning a default (0,0) on failure would let a subsequent nudge teleport the
+            // cursor to the screen corner; fail loudly instead so the caller can abort.
             if (!NativeMethods.GetCursorPos(out var p))
-                return default;
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "GetCursorPos failed.");
             return new GridPoint(p.X, p.Y);
         }
     }
@@ -40,10 +43,6 @@ public sealed class Win32PointerDevice : IPointerDevice
         Click(button);
         Click(button);
     }
-
-    public void ButtonDown(MouseButton button) => SendMouse(Flags(button).Down);
-
-    public void ButtonUp(MouseButton button) => SendMouse(Flags(button).Up);
 
     private static (uint Down, uint Up) Flags(MouseButton button) => button switch
     {
