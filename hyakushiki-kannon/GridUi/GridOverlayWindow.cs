@@ -71,10 +71,14 @@ internal sealed class GridOverlayWindow : Window
     public void ShowGrid(GridRect virtualScreen, GridRect currentBounds, GridConfig config) =>
         _element.UpdateGrid(virtualScreen, currentBounds, config);
 
-    /// <summary>Repaints the overlay as the per-monitor selection labels (first keystroke).</summary>
+    /// <summary>Repaints the overlay as the first-keystroke monitor-selection phase.</summary>
     public void ShowMonitorSelection(
-        GridRect virtualScreen, IReadOnlyList<GridRect> monitors, IReadOnlyList<char> labels) =>
-        _element.UpdateMonitorSelection(virtualScreen, monitors, labels);
+        GridRect virtualScreen,
+        IReadOnlyList<GridRect> monitors,
+        IReadOnlyList<char> labels,
+        int focusedIndex,
+        GridConfig config) =>
+        _element.UpdateMonitorSelection(virtualScreen, monitors, labels, focusedIndex, config);
 
     protected override void OnKeyDown(KeyEventArgs e)
     {

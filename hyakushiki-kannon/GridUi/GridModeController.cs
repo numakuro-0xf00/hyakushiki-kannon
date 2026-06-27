@@ -97,11 +97,13 @@ public sealed class GridModeController : IDisposable
         if (_overlay is null)
             return;
 
-        // First keystroke with more than one monitor: show the per-monitor selection labels.
+        // First keystroke with more than one monitor: show the cell grid on every monitor with the
+        // per-monitor selection-key guide and the focused monitor highlighted.
         if (_awaitingFirstKey && _activeLayout is { Count: > 1 } layout)
         {
             var labels = MonitorLabels(layout.Count);
-            _overlay.ShowMonitorSelection(_screen.VirtualScreenBounds, layout.Monitors, labels);
+            _overlay.ShowMonitorSelection(
+                _screen.VirtualScreenBounds, layout.Monitors, labels, layout.FocusedIndex, _session.Config);
             return;
         }
 
