@@ -6,7 +6,9 @@ the home row. See [`concept.md`](concept.md) for the full concept (Japanese).
 
 ## How it works
 
-1. Press the global hotkey **`Alt+G`** to overlay a grid on every monitor.
+1. Press the global hotkey **`Alt+G`** to start grid mode on the **focused monitor**. On a
+   multi-monitor setup, the first keystroke may instead pick a monitor with a **top-row key**
+   (`q w e r …`); pressing a cell key first just uses the focused monitor.
 2. Press a **home-row key** (`a s d f g h j k l` for the default 3×3 grid) to select a cell.
    The cursor jumps to that cell's centre and the grid zooms in — repeat to home in on a target.
 3. Press **`Enter`/`Space`** to confirm and left-click, **`r`** to right-click, **`d`** to

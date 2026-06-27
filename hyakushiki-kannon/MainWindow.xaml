@@ -21,7 +21,8 @@
 
         <StackPanel Grid.Row="2">
             <TextBlock Text="使い方" FontWeight="Bold" Margin="0,0,0,4" />
-            <TextBlock TextWrapping="Wrap" Text="Alt+G でグリッド表示。a s d f g h j k l でセルを選択（繰り返しで絞り込み）。" />
+            <TextBlock TextWrapping="Wrap" Text="Alt+G でグリッド表示。マルチモニターでは最初に q w e r … でモニターを選択（押さなければフォーカス中のモニター）。" />
+            <TextBlock TextWrapping="Wrap" Margin="0,2,0,0" Text="a s d f g h j k l でセルを選択（繰り返しで絞り込み）。" />
             <TextBlock TextWrapping="Wrap" Margin="0,2,0,0" Text="Enter/Space で確定→左クリック、r で右クリック、d でダブルクリック。" />
             <TextBlock TextWrapping="Wrap" Margin="0,2,0,0" Text="矢印キーで微調整、Backspace で一段戻る、Esc で解除。" />
         </StackPanel>

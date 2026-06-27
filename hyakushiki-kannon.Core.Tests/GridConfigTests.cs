@@ -20,7 +20,7 @@ public class GridConfigTests
     [Fact]
     public void SupportsLargerGridsWithEnoughKeys()
     {
-        var config = new GridConfig(rows: 4, cols: 4, cellKeys: "asdfghjklqwertyu");
+        var config = new GridConfig(rows: 4, cols: 4, cellKeys: "asdfghjklzxcvbnm", monitorKeys: "qwer");
 
         Assert.Equal(16, config.CellCount);
         Assert.Equal(16, config.KeyMap.Count);
@@ -68,6 +68,31 @@ public class GridConfigTests
         Assert.NotEqual(new GridConfig(nudgeStep: 8), new GridConfig(nudgeStep: 12));
         Assert.NotEqual(
             new GridConfig(rows: 3, cols: 3),
-            new GridConfig(rows: 4, cols: 4, cellKeys: "asdfghjklqwertyu"));
+            new GridConfig(rows: 4, cols: 4, cellKeys: "asdfghjklqwertyu", monitorKeys: "zxcvbnm"));
+        Assert.NotEqual(new GridConfig(monitorKeys: "qwer"), new GridConfig(monitorKeys: "uiop"));
+    }
+
+    [Fact]
+    public void Default_MonitorKeysAreTheTopRow()
+    {
+        var config = GridConfig.Default;
+
+        Assert.Equal("qwertyuiop", config.MonitorKeys);
+        Assert.Equal(10, config.MonitorKeyMap.Count);
+        Assert.True(config.MonitorKeyMap.TryGetCell('q', out var first));
+        Assert.Equal(0, first);
+    }
+
+    [Fact]
+    public void Constructor_RejectsMonitorKeysOverlappingCellKeys()
+    {
+        // 'a' is a cell key, so it cannot also be a monitor key (first keystroke would be ambiguous).
+        Assert.Throws<ArgumentException>(() => new GridConfig(monitorKeys: "aqwe"));
+    }
+
+    [Fact]
+    public void Constructor_RejectsEmptyMonitorKeys()
+    {
+        Assert.Throws<ArgumentException>(() => new GridConfig(monitorKeys: ""));
     }
 }

@@ -25,6 +25,10 @@ public sealed class GridSession
     // zoomed into so far. Kept as a stack so Back() can undo one level at a time.
     private readonly Stack<GridRect> _path = new();
 
+    // The monitors available this session (null when activated with an explicit rectangle). While
+    // set, the very first keystroke may pick a different monitor instead of drilling a cell.
+    private MonitorLayout? _monitors;
+
     public GridSession(IPointerDevice pointer, GridConfig config)
     {
         _pointer = pointer ?? throw new ArgumentNullException(nameof(pointer));
@@ -52,15 +56,65 @@ public sealed class GridSession
     public GridConfig Config => _config;
 
     /// <summary>
-    /// Enters grid mode covering <paramref name="bounds"/> (typically the virtual screen). The
-    /// cursor is not moved until the first <see cref="Drill"/>, so cancelling immediately is a
-    /// no-op for the user.
+    /// True while the first keystroke can still pick a monitor: the session was activated with a
+    /// <see cref="MonitorLayout"/> and no cell has been drilled yet. Once a cell is drilled (or the
+    /// session enters acting), monitor keys no longer apply.
+    /// </summary>
+    public bool CanSelectMonitor =>
+        State == GridSessionState.Selecting && _path.Count == 1 && _monitors is not null;
+
+    /// <summary>
+    /// Enters grid mode covering <paramref name="bounds"/> directly (single rectangle, no monitor
+    /// selection). The cursor is not moved until the first <see cref="Drill"/>, so cancelling
+    /// immediately is a no-op for the user.
     /// </summary>
     public void Activate(GridRect bounds)
     {
         _path.Clear();
+        _monitors = null;
         _path.Push(bounds);
         State = GridSessionState.Selecting;
+    }
+
+    /// <summary>
+    /// Enters grid mode on the focused monitor of <paramref name="layout"/>. Until the first cell
+    /// is drilled, the first keystroke may instead pick another monitor via
+    /// <see cref="SelectMonitor"/> (see <see cref="CanSelectMonitor"/>).
+    /// </summary>
+    public void Activate(MonitorLayout layout)
+    {
+        ArgumentNullException.ThrowIfNull(layout);
+
+        _path.Clear();
+        _monitors = layout;
+        _path.Push(layout.FocusedMonitor);
+        State = GridSessionState.Selecting;
+    }
+
+    /// <summary>
+    /// Re-targets the grid to the monitor bound to <paramref name="monitorKey"/> (first keystroke
+    /// only). The drill depth stays at 1, so the next keystroke selects a cell on that monitor.
+    /// </summary>
+    /// <returns>
+    /// <c>true</c> if the key maps to an existing monitor; <c>false</c> for an unbound key or a key
+    /// that addresses a monitor that does not exist (ignored).
+    /// </returns>
+    /// <exception cref="InvalidOperationException">Thrown when monitor selection is not available.</exception>
+    public bool SelectMonitor(char monitorKey)
+    {
+        if (!CanSelectMonitor)
+            throw new InvalidOperationException("Monitor selection is not available right now.");
+
+        if (!_config.MonitorKeyMap.TryGetCell(monitorKey, out var monitorIndex))
+            return false;
+        if (monitorIndex >= _monitors!.Count)
+            return false;
+
+        // Re-scope the grid root to the chosen monitor without advancing the drill depth. The
+        // cursor is left where it is; the first cell drill on this monitor will move it.
+        _path.Clear();
+        _path.Push(_monitors.Monitors[monitorIndex]);
+        return true;
     }
 
     /// <summary>
@@ -167,6 +221,7 @@ public sealed class GridSession
     public void Cancel()
     {
         _path.Clear();
+        _monitors = null;
         State = GridSessionState.Inactive;
     }
 
