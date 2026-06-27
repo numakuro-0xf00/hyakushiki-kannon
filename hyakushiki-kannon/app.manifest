@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <!--
+    GridMouse positions the cursor in physical pixels (SetCursorPos / GetSystemMetrics) and
+    overlays the grid across every monitor. Declaring Per-Monitor-V2 DPI awareness keeps those
+    physical-pixel coordinates un-virtualised so the grid labels and the cursor jump land on the
+    same spot under mixed per-monitor scaling.
+  -->
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+</assembly>
